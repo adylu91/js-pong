@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>pong</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html {
+        font-size: 62, 5%;
+        font-family: "Oswald", sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        background-color: darkgray;
+        display: flex;
+        justify-content: space-around;
+        flex-direction: row;
+      }
+      #main {
+        width: 80vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      h1 {
+        font-size: 4rem;
+      }
+      h1 > span {
+        color: red;
+      }
+      #canvas {
+        border: 3px solid black;
+      }
+      #reset {
+        margin-top: 1rem;
+        font-size: 2.5rem;
+        padding: 0.3rem;
+        font-weight: 700;
+        border: 2px solid black;
+        background-color: grey;
+        color: white;
+      }
+      #reset:hover {
+        color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <h1><span>P</span>ONG <span>B</span>Y <span>D</span>YLU</h1>
+      <canvas id="canvas" height="500" width="1000"></canvas>
+      <button id="reset">wyczyść wynik</button>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      ctx.height = 500;
+      ctx.width = 1000;
+
+      //stałe dla wielkości paletek, piłki itp
+
+      const canWid = ctx.width; //szerokość canvas
+      const canHei = ctx.height; //wysokość canvas
+
+      const palWid = 25; //szerokość paletki
+      const palHei = 200; //wysokość paletki
+      const palOdLewej = 50; //odległość paletki od lewej krawędzi
+      const palOdPrawej = canWid - palOdLewej - palWid; //odległość paletki od prawej krawędzi
+
+      let pilkaSize = 30; //wymiar pilki X i Y
+
+      const szerLinii = 4; //szerokość linii środkowej
+      const wysLinii = 10; //wysokość linii środkowej
+
+      //stałe dla przebiegu rozgrywki
+      let xSpeed = 10; //szybkość piłki na osi X
+      let ySpeed = 10; //szybkość piłki na osi Y
+
+      let ballPositionXmiddle = canWid / 2 - pilkaSize / 2 + xSpeed; //ustawienie środka piłki
+      let ballPositionYmiddle = canHei / 2 - pilkaSize / 2 + ySpeed; //ustawienie środka piłki
+
+      let playerOnePosition = canHei / 2 - palHei / 2; //pozycja paletki gracza
+      let playerTwoPosition = canHei / 2 - palHei / 2; //pozycja paletki komputera
+
+      let poziomPoziomTrudnosci = 3; //poziom trudnosci komputera
+
+      let wynikGracz = 0;
+      let wynikKomputer = 0;
+
+      //wypełnienie tła
+      function tlo() {
+        ctx.beginPath();
+        ctx.rect(0, 0, canWid, canHei);
+        ctx.fillStyle = "red";
+        ctx.fill();
+      }
+
+      //lewa paletka
+      function playerOne() {
+        ctx.beginPath();
+        ctx.rect(palOdLewej, playerOnePosition, palWid, palHei);
+        ctx.fillStyle = "black";
+        ctx.fill();
+      }
+      //prawa paletka
+      function playerTwo() {
+        if (ballPositionXmiddle >= canWid / 2) {
+          if (ballPositionYmiddle > playerTwoPosition) {
+            playerTwoPosition += poziomPoziomTrudnosci;
+          } else if (ballPositionYmiddle < playerTwoPosition) {
+            playerTwoPosition -= poziomPoziomTrudnosci;
+          }
+        } else if (ballPositionXmiddle < canWid / 2) {
+          if (ballPositionYmiddle > playerTwoPosition) {
+            playerTwoPosition += poziomPoziomTrudnosci / 3;
+          } else if (ballPositionYmiddle < playerTwoPosition) {
+            playerTwoPosition -= poziomPoziomTrudnosci / 3;
+          }
+        }
+        ctx.beginPath();
+        ctx.rect(palOdPrawej, playerTwoPosition, palWid, palHei);
+        ctx.fillStyle = "green";
+        ctx.fill();
+      }
+      //linia środkowa
+      function line() {
+        for (let i = 5; i < canHei; i += 20) {
+          ctx.beginPath();
+          ctx.rect(canWid / 2 - szerLinii / 2, i, szerLinii, wysLinii);
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
+      }
+
+      function pilkaMove() {
+        ctx.beginPath();
+        ctx.rect(
+          ballPositionXmiddle,
+          ballPositionYmiddle,
+          pilkaSize,
+          pilkaSize
+        );
+        ctx.fillStyle = "grey";
+        ctx.fill();
+        ballPositionXmiddle += xSpeed;
+        ballPositionYmiddle += ySpeed;
+      }
+
+      function sprawdzKolizje() {
+        //sprawdz kolizje krawedzi i odbij
+        if (
+          ballPositionYmiddle + pilkaSize >= canHei ||
+          ballPositionYmiddle <= 0
+        ) {
+          ySpeed = -ySpeed;
+        }
+
+        if (ballPositionXmiddle + pilkaSize >= canWid) {
+          xSpeed = -xSpeed;
+          wynikGracz++;
+          reset();
+        } else if (ballPositionXmiddle <= 0) {
+          xSpeed = -xSpeed;
+          wynikKomputer++;
+          reset();
+        }
+        //sprawdz kolizje paletek i odbij
+        if (ballPositionXmiddle == palOdLewej + palWid) {
+          if (
+            ballPositionYmiddle + pilkaSize >= playerOnePosition &&
+            ballPositionYmiddle <= playerOnePosition + palHei
+          ) {
+            xSpeed = -xSpeed;
+          }
+        }
+
+        if (ballPositionXmiddle + pilkaSize == palOdPrawej) {
+          if (
+            ballPositionYmiddle + pilkaSize >= playerTwoPosition &&
+            ballPositionYmiddle <= playerTwoPosition + palHei
+          ) {
+            xSpeed = -xSpeed;
+          }
+        }
+      }
+
+      function reset() {
+        ballPositionXmiddle = canWid / 2 - pilkaSize / 2 + xSpeed;
+        ballPositionYmiddle = canHei / 2 - pilkaSize / 2 + ySpeed;
+      }
+
+      function rysujWynik() {
+        ctx.beginPath();
+        ctx.font = "30px Oswald";
+        ctx.fillText(wynikGracz, canWid / 2 - 50, 50);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.font = "30px Oswald";
+        ctx.fillText(wynikKomputer, canWid / 2 + 35, 50);
+        ctx.fill();
+      }
+
+      canvas.onmousemove = function (e) {
+        if (
+          e.clientY - canvas.offsetTop >= 0 &&
+          e.clientY - canvas.offsetTop <= canHei
+        ) {
+          playerOnePosition = e.clientY - canvas.offsetTop - palHei / 2;
+        }
+      };
+
+      setInterval(game, 1000 / 60); //wykonaj f. 60 x na sekunde
+
+      function game() {
+        tlo();
+        line();
+        rysujWynik();
+        pilkaMove();
+        playerOne();
+        playerTwo();
+        sprawdzKolizje();
+      }
+
+      //reset punktów
+      const resetButton = document.getElementById("reset");
+      resetButton.onclick = function () {
+        wynikGracz = 0;
+        wynikKomputer = 0;
+      };
+    </script>
+  </body>
+</html>
